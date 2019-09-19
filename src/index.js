@@ -16,20 +16,6 @@ const ToggleContent = ({ toggle, content }) => {
   );
 };
 
-const AddElementsWrapper = ({ children, onClickAddElement }) => {
-  return (
-    <div style={{ border: "1px dotted grey", position: "relative" }}>
-      {children}
-      <button
-        style={{ position: "absolute", left: 0, top: "0", background: "red" }}
-        onClick={() => onClickAddElement && onClickAddElement()}
-      >
-        +
-      </button>
-    </div>
-  );
-};
-
 const id = () =>
   String(Math.random())
     .split(".")
@@ -38,14 +24,14 @@ const id = () =>
 const componentsTree = {
   text: {
     generator: () => ({
-      id: id(),
+      id: "text-" + id(),
       type: "text",
       props: { text: "Hello!", color: "red-400", size: "4xl" }
     })
   },
   button: {
     generator: () => ({
-      id: id(),
+      id: "button-" + id(),
       type: "button",
       props: { text: "my button", url: "http://sapo.pt" }
     })
@@ -117,13 +103,16 @@ class Disp extends React.Component {
       );
     };
 
-    const CustomizeElementWrapper = ({ id, type, children }) => (
-      <div
+    const CustomizeElementWrapper = ({ As = "div", id, type, children }) => (
+      <As
         style={{ border: "1px solid green", padding: 3 }}
-        onClick={() => this.addElement(id, type)}
+        onClick={e => {
+          e.stopPropagation();
+          this.addElement(id, type);
+        }}
       >
         {children}
-      </div>
+      </As>
     );
 
     const render = (element, parent) => {
@@ -134,6 +123,7 @@ class Disp extends React.Component {
               id={element.id}
               type={element.type}
               key={element.id}
+              As="span"
             >
               <RenderButton element={element} parent={parent} />
             </CustomizeElementWrapper>
