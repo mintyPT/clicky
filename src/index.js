@@ -2,7 +2,9 @@ import _ from "lodash";
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import "./styles.css";
-
+/**
+ *
+ */
 const ToggleContent = ({ toggle, content }) => {
   const [isShown, setIsShown] = useState(false);
   const hide = () => setIsShown(false);
@@ -15,14 +17,18 @@ const ToggleContent = ({ toggle, content }) => {
     </>
   );
 };
-
+/**
+ *
+ */
 const id = t =>
   t +
   "-" +
   String(Math.random())
     .split(".")
     .pop();
-
+/**
+ *
+ */
 const componentsTree = {
   text: {
     generator: (s = {}) => ({
@@ -39,8 +45,8 @@ const componentsTree = {
     })
   },
   buttons: {
-    allow: ["button"],
-    generator: ({ ...s } = {}, children) => ({
+    allowsAdditions: ["button"],
+    generator: ({ ...s } = {}, children = []) => ({
       id: id("buttons"),
       type: "buttons",
       props: {
@@ -58,14 +64,18 @@ const componentsTree = {
     })
   },
   wrapper: {
-    allow: ["wrapper", "buttons", "text"],
-    generator: (s, children) => ({
+    allowsAdditions: ["wrapper", "buttons", "text"],
+    generator: (s, children = []) => ({
       id: id("wrapper"),
       type: "wrapper",
       children
     })
   }
 };
+
+/**
+ *
+ */
 const CustomizeElementWrapper = ({
   As = "div",
   children,
@@ -101,24 +111,36 @@ class Disp extends React.Component {
     };
   }
 
-  selectElement(id, type) {
-    let selected;
-    processTree(e => {
-      if (e.id === id) {
-        selected = e;
-      }
-    }, this.state.elements);
+  selectElement(id) {
+    const getElementById = (elements, id) => {
+      let selected;
+      processTree(e => {
+        if (e.id === id) {
+          selected = e;
+        }
+      }, elements);
+      return selected;
+    };
 
-    this.setState({ selectedId: id, selected });
+    this.setState({
+      selectedId: id,
+      selected: getElementById(this.state.elements, id)
+    });
   }
 
   action(id, action) {
+    const elements = processTree(
+      e => (e.id === id ? elementAction(action, e) : e),
+      this.state.elements
+    );
+
     this.setState({
-      elements: processTree(
-        e => (e.id === id ? elementAction(action, e) : e),
-        this.state.elements
-      )
+      elements: elements
     });
+
+    if (action.type === "add") {
+      this.selectElement(action.component.id);
+    }
   }
 
   render() {
@@ -188,75 +210,83 @@ class Disp extends React.Component {
       );
     };
 
+    const { selectedId, selected } = this.state;
     return (
       <div>
         <ToggleContent
           toggle={show => <button onClick={show}>Open</button>}
-          content={({ show, hide }) => (
-            <p>
-              <Modal>
-                {JSON.stringify(this.state.selectedId)}
-                {this.state.selectedId && (
-                  <div>
-                    <fieldset>
-                      <legend>Add elements</legend>
-                      <button
-                        style={{ background: "#333333" }}
-                        onClick={() =>
-                          this.action(this.state.selectedId, {
-                            type: "add",
-                            component: componentsTree.text.generator()
-                          })
-                        }
-                      >
-                        add text
-                      </button>
-                      <button
-                        style={{ background: "#333333" }}
-                        onClick={() =>
-                          this.action(this.state.selectedId, {
-                            type: "add",
-                            component: componentsTree.button.generator()
-                          })
-                        }
-                      >
-                        add button
-                      </button>
-                      ---
-                    </fieldset>
-                    <fieldset>
-                      <legend>Customize</legend>
-                      ---
-                    </fieldset>
+          content={({ show, hide }) => {
+            const allowsAddElementActions = _.get(
+              componentsTree,
+              _.get(selected, "type") + ".allowsAdditions",
+              []
+            );
+            const isAllowed = arr => k => arr.indexOf(k) > -1;
+            const isAllowedAddElementActions = isAllowed(
+              allowsAddElementActions
+            );
 
-                    <button
-                      style={{ background: "#333333" }}
-                      onClick={() =>
-                        this.action(this.state.selectedId, { type: "delete" })
-                      }
-                    >
-                      Delete element
-                    </button>
+            return (
+              <p>
+                <Modal>
+                  {selectedId && selected && (
+                    <div>
+                      selected: {selected.type}
+                      <fieldset className="border border-red-700">
+                        <legend>Add elements</legend>
 
-                    <button
-                      style={{ background: "#333333" }}
-                      onClick={() =>
-                        this.action(this.state.selectedId, {
-                          type: "update_props",
-                          key: "styleChildren.border",
-                          value: "1px solid red"
-                        })
-                      }
-                    >
-                      Update border
-                    </button>
-                  </div>
-                )}
+                        {_.map(
+                          componentsTree,
+                          (e, k) =>
+                            isAllowedAddElementActions(k) && (
+                              <button
+                                className="border border-black mx-1"
+                                onClick={() =>
+                                  this.action(selectedId, {
+                                    type: "add",
+                                    component: componentsTree[k].generator()
+                                  })
+                                }
+                              >
+                                add {k}
+                              </button>
+                            )
+                        )}
+                      </fieldset>
+                      <fieldset className="border border-red-700 mt-4">
+                        <legend>Customize</legend>
+                        <button
+                          className="border border-black ma-1"
+                          onClick={() =>
+                            this.action(selectedId, {
+                              type: "update_props",
+                              key: "styleChildren.border",
+                              value: "1px solid red"
+                            })
+                          }
+                        >
+                          Update border
+                        </button>
+                      </fieldset>
+                      <fieldset className="border border-red-700 mt-4">
+                        <legend>Actions</legend>
+                        <button
+                          className="border border-black mx-1"
+                          onClick={() =>
+                            this.action(selectedId, { type: "delete" })
+                          }
+                        >
+                          Delete element
+                        </button>
+                      </fieldset>
+                    </div>
+                  )}
 
-                <button onClick={hide}>Close</button>
-              </Modal>
-            </p>
-          )}
+                  <button onClick={hide}>Close</button>
+                </Modal>
+              </p>
+            );
+          }}
         />
         <hr />
         {elements.map(render)}
@@ -264,13 +294,17 @@ class Disp extends React.Component {
     );
   }
 }
-
+/**
+ *
+ */
 const Modal = ({ children }) =>
   ReactDOM.createPortal(
     <div className="modal">{children}</div>,
     document.getElementById("modal-root")
   );
-
+/**
+ *
+ */
 function App() {
   return (
     <div className="App">
@@ -278,7 +312,9 @@ function App() {
     </div>
   );
 }
-
+/**
+ *
+ */
 const rootElement = document.getElementById("root");
 ReactDOM.render(<App />, rootElement);
 
@@ -314,16 +350,12 @@ const elementAction = (action, element) => {
     case "update_props":
       return elementActionUpdateProps(action, element);
     default:
-      break;
+      throw Error("Missing logic for action " + action.type);
   }
-
-  return element;
 };
 
 function elementActionUpdateProps(action, element) {
-  const key = "props." + action.key;
-  element = _.set(element, key, action.value);
-  return element;
+  return _.set(element, "props." + action.key, action.value);
 }
 
 function elementActionAdd(element, action) {
