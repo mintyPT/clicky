@@ -99,12 +99,14 @@ const CustomizeElementWrapper = ({
   <As
     {...etc}
     className={
-      "relative target" + (active ? " active" : "") + (empty ? " empty" : "")
+      "relative target" +
+      (active ? " border border-blue-500" : "") +
+      (empty ? " empty" : "")
     }
     style={{ ...style }}
   >
     {active ? (
-      <span className="absolute top-0 left-0 text-xs bg-red-400 px-2 py-1">
+      <span className="absolute top-0 left-0 text-xs bg-blue-400 px-2 py-1">
         {type}
       </span>
     ) : (
@@ -248,7 +250,7 @@ class Disp extends React.Component {
     return (
       <div>
         <ToggleContent
-          toggle={show => <button onClick={show}>Open</button>}
+          toggle={show => <button onClick={show}>sidekick</button>}
           content={({ show, hide }) => {
             const allowsAddElementActions = _.get(
               componentsTree,
