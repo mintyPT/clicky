@@ -7,12 +7,12 @@ const ChildWrapper = ({ children, onClickAddElement }) => {
   return (
     <div style={{ border: "1px dotted grey", position: "relative" }}>
       {children}
-      <a
+      <button
         style={{ position: "absolute", left: 0, top: "0", background: "red" }}
         onClick={() => onClickAddElement && onClickAddElement()}
       >
         +
-      </a>
+      </button>
     </div>
   );
 };
@@ -90,7 +90,7 @@ class Disp extends React.Component {
       switch (element.type) {
         case "button":
           let style = {};
-          if (parent.type == "buttons") {
+          if (parent.type === "buttons") {
             style = parent.props.styleChildren;
           }
           return (
