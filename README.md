@@ -1,2 +1,0 @@
-# clicky
-Created with CodeSandbox
