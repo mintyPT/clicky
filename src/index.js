@@ -38,14 +38,16 @@ const componentsTree = {
     })
   },
   image: {
-    generator: (s = {}) => ({
+    allowsAdditions: ["wrapper", "buttons", "text", "image"],
+    generator: (s = {}, children = []) => ({
       id: id("image"),
       type: "image",
       props: {
         src:
           "https://images.unsplash.com/photo-1558980394-4c7c9299fe96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80",
         ...s
-      }
+      },
+      children
     })
   },
   button: {
@@ -220,14 +222,18 @@ class Disp extends React.Component {
           break;
         }
         case "image":
+          const inner2 = element.children.map(el => render(el, element));
           inner = (
             <div
               style={{
                 height: 500,
                 background: "url(" + element.props.src + ")"
               }}
-            />
+            >
+              {inner2}
+            </div>
           );
+
           break;
         default:
           return "Missing render for " + element.type;
