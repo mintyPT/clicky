@@ -37,6 +37,17 @@ const componentsTree = {
       props: { text: "Hello!", color: "red-400", size: "4xl", ...s }
     })
   },
+  image: {
+    generator: (s = {}) => ({
+      id: id("image"),
+      type: "image",
+      props: {
+        src:
+          "https://images.unsplash.com/photo-1558980394-4c7c9299fe96?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80",
+        ...s
+      }
+    })
+  },
   button: {
     generator: (s = {}) => ({
       id: id("button"),
@@ -64,7 +75,7 @@ const componentsTree = {
     })
   },
   wrapper: {
-    allowsAdditions: ["wrapper", "buttons", "text"],
+    allowsAdditions: ["wrapper", "buttons", "text", "image"],
     generator: (s, children = []) => ({
       id: id("wrapper"),
       type: "wrapper",
@@ -80,15 +91,25 @@ const CustomizeElementWrapper = ({
   As = "div",
   children,
   active = false,
+  empty = false,
   type,
   style = {},
   ...etc
 }) => (
   <As
     {...etc}
-    className={"target " + (active ? "active" : "")}
-    style={{ margin: 5, padding: 5, ...style }}
+    className={
+      "relative target" + (active ? " active" : "") + (empty ? " empty" : "")
+    }
+    style={{ ...style }}
   >
+    {active ? (
+      <span className="absolute top-0 left-0 text-xs bg-red-400 px-2 py-1">
+        {type}
+      </span>
+    ) : (
+      undefined
+    )}
     {children}
   </As>
 );
@@ -102,6 +123,7 @@ class Disp extends React.Component {
       elements: [
         componentsTree.wrapper.generator({}, [
           componentsTree.text.generator(),
+          componentsTree.image.generator(),
           componentsTree.buttons.generator({}, [
             componentsTree.button.generator({ text: "facebook" }),
             componentsTree.button.generator({ text: "twitter" })
@@ -176,10 +198,12 @@ class Disp extends React.Component {
         case "buttons":
           const children = element.children.map(el => render(el, element));
           inner = <div>{children}</div>;
+          innerProps.empty = _.castArray(element.children).length === 0;
           break;
 
         case "wrapper":
           inner = element.children.map(el => render(el, element));
+          innerProps.empty = _.castArray(element.children).length === 0;
           break;
 
         case "text": {
@@ -190,6 +214,16 @@ class Disp extends React.Component {
           innerProps.style = { display: "inline-block" };
           break;
         }
+        case "image":
+          inner = (
+            <div
+              style={{
+                height: 500,
+                background: "url(" + element.props.src + ")"
+              }}
+            />
+          );
+          break;
         default:
           return "Missing render for " + element.type;
       }
