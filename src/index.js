@@ -63,7 +63,8 @@ const componentsTree = {
       props: {
         styleChildren: {
           border: "1px solid #333",
-          marginRight: "20px",
+          marginRight: "10px",
+          marginLeft: "10px",
           borderRadius: "500px",
           padding: "5px 10px",
           display: "inline-block",
@@ -100,8 +101,10 @@ const CustomizeElementWrapper = ({
     {...etc}
     className={
       "relative target" +
-      (active ? " border border-blue-500" : "") +
-      (empty ? " empty" : "")
+      (active
+        ? " border border-blue-500 bg-gray-200"
+        : " border border-transparent") +
+      (empty ? " h-16 bg-gray-200" : "")
     }
     style={{ ...style }}
   >

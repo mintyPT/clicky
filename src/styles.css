@@ -17,12 +17,3 @@
 * {
   box-sizing: border-box;
 }
-
-.target.active {
-  border: 1px solid red;
-}
-
-.target.empty {
-  min-height: 30px;
-  background: #f9f9f9;
-}
