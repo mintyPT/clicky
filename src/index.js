@@ -87,7 +87,7 @@ const CustomizeElementWrapper = ({
   <As
     {...etc}
     className={"target " + (active ? "active" : "")}
-    style={{ margin: 5, ...style }}
+    style={{ margin: 5, padding: 5, ...style }}
   >
     {children}
   </As>
@@ -112,16 +112,6 @@ class Disp extends React.Component {
   }
 
   selectElement(id) {
-    const getElementById = (elements, id) => {
-      let selected;
-      processTree(e => {
-        if (e.id === id) {
-          selected = e;
-        }
-      }, elements);
-      return selected;
-    };
-
     this.setState({
       selectedId: id,
       selected: getElementById(this.state.elements, id)
@@ -134,12 +124,20 @@ class Disp extends React.Component {
       this.state.elements
     );
 
-    this.setState({
-      elements: elements
-    });
+    const newId = action.component.id;
+    const newElement = getElementById(elements, newId);
+    const selectNewElement = _.isArray(newElement.children);
 
-    if (action.type === "add") {
-      this.selectElement(action.component.id);
+    if (selectNewElement) {
+      this.setState({
+        elements: elements,
+        selectedId: newId,
+        selected: newElement
+      });
+    } else {
+      this.setState({
+        elements: elements
+      });
     }
   }
 
@@ -211,6 +209,8 @@ class Disp extends React.Component {
     };
 
     const { selectedId, selected } = this.state;
+
+    console.log("selectedId, selected", selectedId, selected);
     return (
       <div>
         <ToggleContent
@@ -362,3 +362,13 @@ function elementActionAdd(element, action) {
   element.children.push(action.component);
   return element;
 }
+
+const getElementById = (elements, id) => {
+  let selected;
+  processTree(e => {
+    if (e.id === id) {
+      selected = e;
+    }
+  }, elements);
+  return selected;
+};
