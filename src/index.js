@@ -1,9 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
 import "./styles.css";
 
-const ChildWrapper = ({ children, onClickAddElement }) => {
+const ToggleContent = ({ toggle, content }) => {
+  const [isShown, setIsShown] = useState(false);
+  const hide = () => setIsShown(false);
+  const show = () => setIsShown(true);
+
+  return (
+    <>
+      {toggle(isShown ? hide : show)}
+      {isShown && content({ hide, show })}
+    </>
+  );
+};
+
+const AddElementsWrapper = ({ children, onClickAddElement }) => {
   return (
     <div style={{ border: "1px dotted grey", position: "relative" }}>
       {children}
@@ -17,24 +30,25 @@ const ChildWrapper = ({ children, onClickAddElement }) => {
   );
 };
 
-const id = () => Math.random();
-const textComponent = () => ({
-  id: id(),
-  type: "text",
-  props: { text: "Hello!", color: "red-400", size: "4xl" }
-});
-const buttonComponent = () => ({
-  id: id(),
-  type: "button",
-  props: { text: "my button", url: "http://sapo.pt" }
-});
+const id = () =>
+  String(Math.random())
+    .split(".")
+    .pop();
 
 const componentsTree = {
   text: {
-    generator: textComponent
+    generator: () => ({
+      id: id(),
+      type: "text",
+      props: { text: "Hello!", color: "red-400", size: "4xl" }
+    })
   },
   button: {
-    generator: buttonComponent
+    generator: () => ({
+      id: id(),
+      type: "button",
+      props: { text: "my button", url: "http://sapo.pt" }
+    })
   }
 };
 
@@ -42,19 +56,23 @@ class Disp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      selectedElement: undefined,
       elements: [
         {
           id: "aaa",
           type: "wrapper",
           children: [
-            textComponent(),
+            componentsTree.text.generator(),
             {
               id: "blablabla",
               type: "buttons",
               props: {
                 styleChildren: { border: "1px solid red", marginRight: "20px" }
               },
-              children: [buttonComponent(), buttonComponent()]
+              children: [
+                componentsTree.button.generator(),
+                componentsTree.button.generator()
+              ]
             }
           ]
         }
@@ -63,7 +81,8 @@ class Disp extends React.Component {
   }
 
   addElement(id, type) {
-    let elements = this.state.elements;
+    this.setState({ selectedElement: { id, type } });
+    /*let elements = this.state.elements;
 
     const loop = element => {
       if (element.children) {
@@ -80,42 +99,68 @@ class Disp extends React.Component {
 
     elements = elements.map(loop);
 
-    this.setState({ elements });
+    this.setState({ elements });*/
   }
 
   render() {
     const elements = this.state.elements;
 
+    const RenderButton = ({ element, parent }) => {
+      let style = {};
+      if (parent.type === "buttons") {
+        style = parent.props.styleChildren;
+      }
+      return (
+        <a key={element.id} href={element.props.url} style={style}>
+          {element.props.text}
+        </a>
+      );
+    };
+
+    const CustomizeElementWrapper = ({ id, type, children }) => (
+      <div
+        style={{ border: "1px solid green", padding: 3 }}
+        onClick={() => this.addElement(id, type)}
+      >
+        {children}
+      </div>
+    );
+
     const render = (element, parent) => {
       switch (element.type) {
         case "button":
-          let style = {};
-          if (parent.type === "buttons") {
-            style = parent.props.styleChildren;
-          }
           return (
-            <a key={element.id} href="{element.props.url}" style={style}>
-              {element.props.text}
-            </a>
-          );
-        case "buttons":
-          return (
-            <ChildWrapper
+            <CustomizeElementWrapper
+              id={element.id}
+              type={element.type}
               key={element.id}
-              onClickAddElement={() => this.addElement(element.id, "button")}
             >
-              {element.children.map(el => render(el, element))}
-            </ChildWrapper>
+              <RenderButton element={element} parent={parent} />
+            </CustomizeElementWrapper>
+          );
+
+        case "buttons":
+          const children = element.children.map(el => render(el, element));
+
+          return (
+            <CustomizeElementWrapper
+              id={element.id}
+              type={element.type}
+              key={element.id}
+            >
+              {children}
+            </CustomizeElementWrapper>
           );
 
         case "wrapper":
           return (
-            <ChildWrapper
+            <CustomizeElementWrapper
+              id={element.id}
+              type={element.type}
               key={element.id}
-              onClickAddElement={() => this.addElement(element.id, "text")}
             >
               {element.children.map(el => render(el, element))}
-            </ChildWrapper>
+            </CustomizeElementWrapper>
           );
         case "text": {
           let classNames = "";
@@ -132,9 +177,39 @@ class Disp extends React.Component {
       }
     };
 
-    return elements.map(render);
+    return (
+      <div>
+        <ToggleContent
+          toggle={show => <button onClick={show}>Open</button>}
+          content={({ show, hide }) => (
+            <p>
+              <Modal>
+                {JSON.stringify(this.state.selectedElement)}
+                <fieldset>
+                  <legend>Add elements</legend>
+                  ---
+                </fieldset>
+                <fieldset>
+                  <legend>Customize</legend>
+                  ---
+                </fieldset>
+                <button onClick={hide}>Close</button>
+              </Modal>
+            </p>
+          )}
+        />
+        <hr />
+        {elements.map(render)}
+      </div>
+    );
   }
 }
+
+const Modal = ({ children }) =>
+  ReactDOM.createPortal(
+    <div className="modal">{children}</div>,
+    document.getElementById("modal-root")
+  );
 
 function App() {
   return (
