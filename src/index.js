@@ -21,7 +21,7 @@ const id = () => Math.random();
 const textComponent = () => ({
   id: id(),
   type: "text",
-  props: { text: "Hello!", color: "red", size: "120px" }
+  props: { text: "Hello!", color: "red-400", size: "4xl" }
 });
 const buttonComponent = () => ({
   id: id(),
@@ -118,13 +118,11 @@ class Disp extends React.Component {
             </ChildWrapper>
           );
         case "text": {
-          const style = {
-            color: "blue",
-            fontSize: 40,
-            ...element.props
-          };
+          let classNames = "";
+          classNames = classNames + " text-" + element.props.color;
+          classNames = classNames + " text-" + element.props.size;
           return (
-            <p key={element.id} style={style}>
+            <p key={element.id} className={classNames}>
               {element.props.text}
             </p>
           );
